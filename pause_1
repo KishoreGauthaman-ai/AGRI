@@ -1,0 +1,598 @@
+from kivymd.app import MDApp
+from kivy.lang import Builder
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton
+from kivy.properties import StringProperty
+from kivy.clock import Clock
+import threading
+from api.weather_api import WeatherAPI
+from api.chatbot_api import ChatbotAPI
+from kivymd.uix.card import MDCard
+from kivymd.uix.label import MDLabel
+from kivy.metrics import dp
+from kivymd.uix.boxlayout import MDBoxLayout
+import re
+from kivymd.uix.menu import MDDropdownMenu
+from datetime import datetime
+from plyer import filechooser
+from PIL import Image
+import os
+import onnxruntime as ort
+import numpy as np
+import traceback
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+class AgriApp(MDApp):
+    current_lang = StringProperty("en")  # "en" or "ta"
+    temperature = StringProperty("--°C")
+    humidity = StringProperty("--")
+    wind = StringProperty("--")
+    feels_like = StringProperty("--")
+    sea_level = StringProperty("--")
+    condition = StringProperty("")
+    weather_icon = StringProperty("weather-cloudy")
+    # Centralized translations dictionary
+    TRANSLATIONS = {
+        "en": {
+            # General
+            "app_title": "AGROSKY",
+            "enter_city_hint": "Enter City Name",
+            "enter_city_error": "Please enter a city name",
+            "get_weather": "Get Weather",
+            "humidity_label": "Humidity",
+            "wind_label": "Wind Speed",
+            "feels_like": "Feels Like",
+            "sea_level": "Sea Level",
+            # Leaf page
+            "leaf_title_text": "LeafGuard \u2013 AI Disease Detection",
+            "upload": "Upload Leaf Image",
+            "analyze": "Analyze Disease",
+            "leaf_hint": "Prediction result will appear here.",
+            "run_analysis": "Run Smart Farm Analysis",
+            # Crop spacing page
+            "crop_title_text": "Crop Planning Suite",
+            "field_details_text": "Field Details",
+            "field_length_hint": "Field Length (meters)",
+            "field_width_hint": "Field Width (meters)",
+            "select_crop": "Select Crop",
+            "soil_env_text": "Soil & Environment",
+            "select_soil": "Select Soil Type",
+            "select_moisture": "Select Moisture Level",
+            "ph_hint": "Soil pH Level",
+            # Profit page
+            "profit_title_text": "Farm Profit Calculator",
+            "profit_crop_hint": "Crop Name (Example: Tomato)",
+            "area_hint": "Area (Acres)",
+            "yield_hint": "Yield per Acre (Tons)",
+            "price_hint": "Market Price per Kg (\u20b9)",
+            "cost_hint": "Total Production Cost (\u20b9)",
+            "calc_profit": "Calculate Profit",
+            # Chat page
+            "chat_hint": "Ask AgroBot...",
+            "send": "Send",
+            # Dialogs / Errors
+            "dialog_error_title": "Error",
+            "ok": "OK",
+            "error_valid": "Please enter valid numbers.",
+            "error_upload": "Please upload an image first.",
+            # Leaf analyzer output labels
+            "leaf_output_plant": "Plant",
+            "leaf_output_disease": "Disease",
+            "leaf_output_confidence": "Confidence",
+            # Profit output labels
+            "profit_output_crop": "Crop",
+            "profit_output_prod": "Production",
+            "profit_output_revenue": "Revenue",
+            "profit_output_cost": "Cost",
+            "profit_output_profit": "Profit",
+            "profit_output_margin": "Margin"
+        },
+        "ta": {
+            # General
+            "app_title": "அக்ரோஸ்கை",
+            "enter_city_hint": "நகரத்தின் பெயர்",
+            "enter_city_error": "நகரத்தின் பெயரை உள்ளிடவும்",
+            "get_weather": "வானிலை பெறுக",
+            "humidity_label": "ஈரப்பதம்",
+            "wind_label": "காற்றின் வேகம்",
+            "feels_like": "உணர்வு வெப்பநிலை",
+            "sea_level": "கடல்மட்டம்",
+            # Leaf page
+            "leaf_title_text": "இலை பாதுகாப்பு \u2013 AI நோய் கண்டறிதல்",
+            "upload": "இலை படத்தை பதிவேற்றுக",
+            "analyze": "நோய் கண்டறிதல்",
+            "leaf_hint": "முன்னெச்சரிக்கை முடிவு இங்கே காணப்படும்.",
+            "run_analysis": "பண்ணை பகுப்பாய்வு செய்",
+            # Crop spacing page
+            "crop_title_text": "பயிர் திட்டமிடல்",
+            "field_details_text": "பயிர் நில விவரம்",
+            "field_length_hint": "நில நீளம் (மீ)",
+            "field_width_hint": "நில அகலம் (மீ)",
+            "select_crop": "பயிர் தேர்வு செய்க",
+            "soil_env_text": "மண் மற்றும் சூழல்",
+            "select_soil": "மண் வகை தேர்வு செய்க",
+            "select_moisture": "ஈரப்பதம் தேர்வு செய்க",
+            "ph_hint": "மண் pH நிலை",
+            # Profit page
+            "profit_title_text": "பண்ணை லாப கணக்கீடு",
+            "profit_crop_hint": "பயிர் பெயர் (உதாரணம்: தக்காளி)",
+            "area_hint": "பரப்பு (ஏக்கர்)",
+            "yield_hint": "ஏக்கருக்கு விளைச்சல் (டன்)",
+            "price_hint": "கிலோ சந்தை விலை (\u20b9)",
+            "cost_hint": "மொத்த செலவு (\u20b9)",
+            "calc_profit": "லாபம் கணக்கிடு",
+            # Chat page
+            "chat_hint": "AgroBot கேளுங்கள்...",
+            "send": "அனுப்பு",
+            # Dialogs / Errors
+            "dialog_error_title": "பிழை",
+            "ok": "சரி",
+            "error_valid": "சரியான எண்களை உள்ளிடவும்.",
+            "error_upload": "முதலில் ஒரு படத்தை பதிவேற்றவும்.",
+            # Leaf analyzer output labels
+            "leaf_output_plant": "பயிர்",
+            "leaf_output_disease": "நோய்",
+            "leaf_output_confidence": "நம்பிக்கை",
+            # Profit output labels
+            "profit_output_crop": "பயிர்",
+            "profit_output_prod": "உற்பத்தி",
+            "profit_output_revenue": "வருமானம்",
+            "profit_output_cost": "செலவு",
+            "profit_output_profit": "லாபம்",
+            "profit_output_margin": "வரம்பு"
+        }
+    }
+
+    def build(self):
+        # Initialize chat history and chatbot
+        self.chat_history = []
+        self.chatbot = ChatbotAPI("You are AgroBot, a smart agricultural assistant...")
+        self.theme_cls.primary_palette = "LightBlue"
+        self.theme_cls.theme_style = "Dark"
+        self.theme_cls.material_style = "M2"
+        self.model = None
+        return Builder.load_file("agrivision_app.kv")
+    
+    # Translation helper
+    def t(self, key):
+        return self.TRANSLATIONS[self.current_lang].get(key, key)
+    
+    # Language toggle
+    def toggle_language(self):
+        self.current_lang = "ta" if self.current_lang == "en" else "en"
+        self.update_ui_language()
+    
+    # Update UI widget texts to the current language
+    def update_ui_language(self):
+        # Weather section
+        self.root.ids.city_field.hint_text = self.t("enter_city_hint")
+        self.root.ids.search_btn.text = self.t("get_weather")
+        # Leaf section
+        self.root.ids.upload_btn.text = self.t("upload")
+        self.root.ids.analyze_btn.text = self.t("analyze")
+        self.root.ids.leaf_title.text = self.t("leaf_title_text")
+        self.root.ids.leaf_analysis_label.text = self.t("run_analysis")
+        # Crop spacing section
+        self.root.ids.crop_title.text = self.t("crop_title_text")
+        self.root.ids.field_details.text = self.t("field_details_text")
+        self.root.ids.field_length.hint_text = self.t("field_length_hint")
+        self.root.ids.field_width.hint_text = self.t("field_width_hint")
+        self.root.ids.crop_dropdown.text = self.t("select_crop")
+        self.root.ids.soil_dropdown.text = self.t("select_soil")
+        self.root.ids.moisture_dropdown.text = self.t("select_moisture")
+        self.root.ids.soil_env.text = self.t("soil_env_text")
+        self.root.ids.ph_input.hint_text = self.t("ph_hint")
+        self.root.ids.run_analysis_crop.text = self.t("run_analysis")
+        # Profit section
+        self.root.ids.profit_title.text = self.t("profit_title_text")
+        self.root.ids.profit_crop.hint_text = self.t("profit_crop_hint")
+        self.root.ids.profit_area.hint_text = self.t("area_hint")
+        self.root.ids.profit_yield.hint_text = self.t("yield_hint")
+        self.root.ids.profit_price.hint_text = self.t("price_hint")
+        self.root.ids.profit_cost.hint_text = self.t("cost_hint")
+        self.root.ids.calc_profit_btn.text = self.t("calc_profit")
+        # Chat section
+        self.root.ids.user_input.hint_text = self.t("chat_hint")
+    
+    # Weather fetching
+    def get_weather(self):
+        city = self.root.ids.city_field.text
+        if not city:
+            self.show_error(self.t("enter_city_error"))
+            return
+
+        self.root.ids.search_btn.text = self.t("get_weather") + "..."
+        Clock.schedule_once(lambda dt: self._fetch_weather(city), 0.1)
+    
+    def _fetch_weather(self, city):
+        data = WeatherAPI.get_weather(city)
+        self.root.ids.search_btn.text = self.t("get_weather")
+
+        if "error" in data:
+            self.show_error(data["error"])
+        else:
+            # Update labels with localization
+            self.temperature = f"{data['temp']}°C"
+            if self.current_lang == "ta":
+                self.humidity = f"{self.t('humidity_label')} {data['humidity']}%"
+                self.wind = f"{self.t('wind_label')} {data['wind_speed']} km/h"
+                self.feels_like = f"{self.t('feels_like')} {data['feels_like']}"
+                self.sea_level = f"{self.t('sea_level')} {data['sea_level']}"
+            else:
+                self.humidity = f"{data['humidity']}%"
+                self.wind = f"{data['wind_speed']} km/h"
+                self.feels_like = f"{self.t('feels_like')} {data['feels_like']}"
+                self.sea_level = f"{self.t('sea_level')} {data['sea_level']}"
+            self.condition = data['condition']
+            self.coord = f"The Coordinates are {data['coord']}"
+            self.data = f"The whole datas are {data['data']}"
+            self.bot_processing()
+
+
+            
+
+    # Bot processing (weather context)
+    def bot_processing(self):
+        weather_data = {
+            "city": self.root.ids.city_field.text,
+            "temperature": self.temperature,
+            "humidity": self.humidity,
+            "condition": self.condition,
+            "timestamp": str(datetime.now().strftime("%Y-%m-%d %H:%M")),
+            "prompt": "Read them properly",
+            "coordniates": (self.coord),
+            "data": getattr(self,"data","")
+        }
+        
+        self.chat_history.append({"role": "user", "content": str(weather_data)})
+        response = self.chatbot.get_response(str(weather_data), self.chat_history)
+        self.chat_history.append({"role": "assistant", "content": str(response[:1000])})
+
+    # Error dialog
+    def show_error(self, message):
+        dialog = MDDialog(
+            title=self.t("dialog_error_title"),
+            text=message,
+            buttons=[MDFlatButton(text=self.t("ok"), on_release=lambda x: dialog.dismiss())]
+        )
+        dialog.open()
+
+    # ----- ChatBot Screen -----
+    def send_message(self):
+        user_input = self.root.ids.user_input.text
+        if not user_input.strip():
+            return
+        self.add_message_bubble(user_input, is_user=True)
+        self.root.ids.user_input.text = ""
+        self.root.ids.chat_scroll.scroll_y = 0
+
+        # Add loading indicator
+        self.loading_widget = self.add_message_bubble("AgroBot is typing...", is_user=False, loading=True)
+        threading.Thread(target=self.get_bot_response, args=(user_input,), daemon=True).start()
+    
+    def get_bot_response(self, user_input):
+        lang_instruction = "Respond in Tamil" if self.current_lang == "ta" else "Respond in English"
+        response = self.chatbot.get_response(f"{lang_instruction}\n{user_input}", self.chat_history)
+
+        def update_ui(dt):
+            if hasattr(self, "loading_widget") and self.loading_widget:
+                if self.loading_widget.parent:
+                    self.loading_widget.parent.remove_widget(self.loading_widget)
+            self.add_message_bubble(response, is_user=False)
+        Clock.schedule_once(update_ui)
+
+        self.chat_history.append({"role": "user", "content": user_input[:1000]})
+        self.chat_history.append({"role": "assistant", "content": response[:1000]})
+
+    def add_message_bubble(self, text, is_user, loading=False):
+        bubble_layout = MDBoxLayout(
+            size_hint_y=None,
+            adaptive_height=True,
+            padding=(dp(10), dp(8)),
+            spacing=dp(10)
+        )
+        card = MDCard(
+            size_hint_x=0.9,
+            size_hint_y=None,
+            adaptive_height=True,
+            padding=dp(15),
+            radius=[20, 20, 5, 20] if not is_user else [20, 20, 20, 5],
+            md_bg_color=(0.12, 0.12, 0.12, 1) if not is_user else (0.1, 0.6, 0.3, 1),
+            elevation=3
+        )
+        formatted_text = self.format_markdown_for_kivy(text)
+        label = MDLabel(
+            text=formatted_text,
+            markup=True,
+            size_hint_y=None,
+            halign="left",
+            theme_text_color="Custom",
+            text_color=(1, 1, 1, 1)
+        )
+        label.bind(
+            width=lambda instance, value: setattr(instance, "text_size", (value, None))
+        )
+        label.bind(
+            texture_size=lambda instance, value: setattr(instance, "height", value[1])
+        )
+        card.add_widget(label)
+        if is_user:
+            bubble_layout.add_widget(MDBoxLayout())  # spacer
+            bubble_layout.add_widget(card)
+        else:
+            bubble_layout.add_widget(card)
+            bubble_layout.add_widget(MDBoxLayout())  # spacer
+        self.root.ids.chat_list.add_widget(bubble_layout)
+        self.root.ids.chat_scroll.scroll_y = 0
+        if loading:
+            return bubble_layout
+
+    def format_markdown_for_kivy(self, text):
+        text = re.sub(r"^### (.*)", r"\n[b][size=20]\1[/size][/b]\n", text, flags=re.MULTILINE)
+        text = re.sub(r"\*\*(.*?)\*\*", r"[b]\1[/b]", text)
+        text = re.sub(r"---", "\n[color=#555555]────────────────────────[/color]\n", text)
+        lines = text.split("\n")
+        new_lines = []
+        for line in lines:
+            if "|" in line and not line.strip().startswith("---"):
+                parts = [p.strip() for p in line.split("|") if p.strip()]
+                if len(parts) > 1:
+                    formatted = "\n• " + "  |  ".join(parts)
+                    new_lines.append(formatted)
+                else:
+                    new_lines.append(line)
+            else:
+                new_lines.append(line)
+        return "\n".join(new_lines)
+
+    # ----- Additional Screens -----
+    def on_start(self):
+        # Crop spacing setup
+        self.crop_spacing = {
+            "Wheat": (0.20, 0.10),
+            "Rice": (0.25, 0.15),
+            "Maize": (0.60, 0.25),
+            "Tomato": (0.75, 0.45),
+            "Potato": (0.60, 0.30),
+        }
+        crop_items = [
+            {"text": crop, "viewclass": "OneLineListItem", "on_release": lambda x=crop: self.set_crop(x)}
+            for crop in self.crop_spacing.keys()
+        ]
+        self.crop_menu = MDDropdownMenu(caller=self.root.ids.crop_dropdown, items=crop_items, width_mult=4)
+
+        # Soil types
+        self.soil_types = ["Sandy", "Clay", "Loamy", "Silty", "Peaty"]
+        soil_items = [
+            {"text": soil, "viewclass": "OneLineListItem", "on_release": lambda x=soil: self.set_soil(x)}
+            for soil in self.soil_types
+        ]
+        self.soil_menu = MDDropdownMenu(caller=self.root.ids.soil_dropdown, items=soil_items, width_mult=4)
+
+        # Moisture levels
+        self.moisture_levels = ["Low", "Moderate", "High"]
+        moisture_items = [
+            {"text": level, "viewclass": "OneLineListItem", "on_release": lambda x=level: self.set_moisture(x)}
+            for level in self.moisture_levels
+        ]
+        self.moisture_menu = MDDropdownMenu(caller=self.root.ids.moisture_dropdown, items=moisture_items, width_mult=4)
+
+    def set_crop(self, crop_name):
+        self.root.ids.crop_dropdown.text = crop_name
+        self.crop_menu.dismiss()
+
+    def set_soil(self, soil_type):
+        self.root.ids.soil_dropdown.text = soil_type
+        self.soil_menu.dismiss()
+
+    def set_moisture(self, moisture_level):
+        self.root.ids.moisture_dropdown.text = moisture_level
+        self.moisture_menu.dismiss()
+
+    def generate_farm_prompt(self):
+        crop = self.root.ids.crop_dropdown.text
+        length = self.root.ids.field_length.text
+        width = self.root.ids.field_width.text
+        soil = self.root.ids.soil_dropdown.text
+        moisture = self.root.ids.moisture_dropdown.text
+        ph = self.root.ids.ph_input.text
+        prompt = f"""
+            Analyze this farm setup:
+
+            Crop: {crop}
+            Field Size: {length}m x {width}m
+            Soil Type: {soil}
+            Moisture Level: {moisture}
+            Soil pH: {ph}
+
+            Give recommendations on:
+            - Plant density suitability
+            - Soil improvement suggestions
+            - Fertilizer advice
+            - Yield outlook
+        """
+        return prompt
+    
+    def generate_farm_prompt_leaf(self):
+        plant = self.plant_1
+        leaf_color = "green"
+        diseases_affected = self.diseases_1
+        humidity = self.humidity
+        temperature = self.temperature
+        prompt = f"""
+            Analyze this plant leaf condition:
+
+            Plant Type: {plant}
+            Leaf Color: {leaf_color}
+            Diseases affected: {diseases_affected}
+            Humidity Level: {humidity}
+            Temperature: {temperature}
+
+            Give analysis on:
+            - Possible disease identification
+            - Causes of the condition
+            - Severity level (Low/Medium/High)
+            - Treatment recommendations
+            - Prevention methods
+        """
+        return prompt
+    
+    def run_bot_processing(self):
+        prompt = self.generate_farm_prompt()
+        response = self.chatbot.get_response(prompt, self.chat_history)
+        formatted_text = response.replace("\n", "\n\n")
+        self.root.ids.bot_output.markup = True
+        self.root.ids.bot_output.text = self.format_markdown_for_kivy(formatted_text)
+        self.chat_history.append({"role": "user", "content": prompt[:1000]})
+        self.chat_history.append({"role": "assistant", "content": response[:1000]})
+
+    def run_bot_processing_leaf(self):
+        prompt = self.generate_farm_prompt_leaf()
+        response = self.chatbot.get_response(prompt, self.chat_history)
+        formatted_text = response.replace("\n", "\n\n")
+        self.root.ids.bot_output_leaf.markup = True
+        self.root.ids.bot_output_leaf.text = self.format_markdown_for_kivy(formatted_text)
+        self.chat_history.append({"role": "user", "content": prompt[:1000]})
+        self.chat_history.append({"role": "assistant", "content": response[:1000]})
+
+    # ----- Leaf Image Analyzer (ONNX) -----
+    def open_file_chooser(self):
+        filechooser.open_file(on_selection=self.handle_selection)
+
+    def handle_selection(self, selection):
+        if selection:
+            self.selected_image = selection[0]
+            self.root.ids.leaf_preview.source = self.selected_image
+
+    def init_onnx(self):
+        self.class_names = [
+            "Pepper__bell___Bacterial_spot",
+            "Pepper__bell___healthy",
+            "Potato___Early_blight",
+            "Potato___Late_blight",
+            "Potato___healthy",
+            "Tomato_Bacterial_spot",
+            "Tomato_Early_blight",
+            "Tomato_Late_blight",
+            "Tomato_Leaf_Mold",
+            "Tomato_Septoria_leaf_spot",
+            "Tomato_Spider_mites_Two_spotted_spider_mite",
+            "Tomato__Target_Spot",
+            "Tomato__Tomato_YellowLeaf__Curl_Virus",
+            "Tomato__Tomato_mosaic_virus",
+            "Tomato_health"
+        ]
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        model_path = os.path.join(BASE_DIR, "model.onnx")
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"ONNX model not found at: {model_path}")
+        self.session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
+        self.input_name = self.session.get_inputs()[0].name
+        print("✅ ONNX model loaded successfully")
+
+    def preprocess_image(self, image_path):
+        image = Image.open(image_path).convert("RGB")
+        image = image.resize((224, 224))
+        img = np.array(image).astype("float32") / 255.0
+        mean = np.array([0.485, 0.456, 0.406], dtype="float32")
+        std = np.array([0.229, 0.224, 0.225], dtype="float32")
+        img = (img - mean) / std
+        img = np.transpose(img, (2, 0, 1))
+        img = np.expand_dims(img, axis=0)
+        return img
+
+    def analyze_leaf(self):
+        if not hasattr(self, "session"):
+            self.init_onnx()
+        if not hasattr(self, "selected_image") or not self.selected_image:
+            self.root.ids.result_label.text = self.t("error_upload")
+            return
+        threading.Thread(target=self._analyze_leaf_worker, daemon=True).start()
+
+    def _analyze_leaf_worker(self):
+        try:
+            input_image = self.preprocess_image(self.selected_image).astype(np.float32)
+            outputs = self.session.run(None, {self.input_name: input_image})
+            logits = outputs[0]
+            logits = logits - np.max(logits, axis=1, keepdims=True)
+            exp = np.exp(logits)
+            probabilities = exp / np.sum(exp, axis=1, keepdims=True)
+            predicted = int(np.argmax(probabilities, axis=1)[0])
+            confidence = float(probabilities[0][predicted])
+            raw_label = self.class_names[predicted]
+            confidence_percent = round(confidence * 100, 2)
+            cleaned = raw_label.replace("___", " - ").replace("__", " - ").replace("_", " ")
+            if " - " in cleaned:
+                plant, disease = cleaned.split(" - ", 1)
+            else:
+                plant = "Plant"
+                disease = cleaned
+            if self.current_lang == "ta":
+                # Tamil output
+                result_text = (
+                    f"[b][color=#1bb56b]{self.t('leaf_output_plant')}:[/color][/b] {plant}\n"
+                    f"[b][color=#1bb56b]{self.t('leaf_output_disease')}:[/color][/b] {disease}\n"
+                    f"[b][color=#1bb56b]{self.t('leaf_output_confidence')}:[/color][/b] {confidence_percent}%"
+                )
+            else:
+                # English output
+                result_text = (
+                    f"[b][color=#1bb56b]{self.t('leaf_output_plant')}:[/color][/b] {plant}\n"
+                    f"[b][color=#1bb56b]{self.t('leaf_output_disease')}:[/color][/b] {disease}\n"
+                    f"[b][color=#1bb56b]{self.t('leaf_output_confidence')}:[/color][/b] {confidence_percent}%"
+                )
+            Clock.schedule_once(lambda dt: self.update_result(result_text))
+            dummy = f"Plant: {plant}\nDisease: {disease}\nConfidence: {confidence_percent}%"
+            self.chat_history.append({"role": "user", "content": dummy})
+            response = self.chatbot.get_response(dummy, self.chat_history)
+            self.chat_history.append({"role": "assistant", "content": str(response[:1000])})
+            print("Chatbot Response:\n", response)
+        except Exception as e:
+            traceback.print_exc()
+            error_msg = f"Error analyzing image:\n{str(e)}"
+            Clock.schedule_once(lambda dt: self.update_result(error_msg))
+
+    def update_result(self, text):
+        self.root.ids.result_label.markup = True
+        self.root.ids.result_label.text = text
+
+    # Profit calculation
+    def calculate_profit(self):
+        try:
+            crop = self.root.ids.profit_crop.text
+            area = float(self.root.ids.profit_area.text)
+            yield_per_acre = float(self.root.ids.profit_yield.text)
+            price = float(self.root.ids.profit_price.text)
+            cost = float(self.root.ids.profit_cost.text)
+            production = yield_per_acre * area * 1000  # convert to kg
+            revenue = production * price
+            profit = revenue - cost
+            margin = (profit / revenue) * 100 if revenue != 0 else 0
+            if self.current_lang == "ta":
+                result = (
+                    f"[b]{self.t('profit_output_crop')}:[/b] {crop}\n"
+                    f"[b]{self.t('profit_output_prod')}:[/b] {round(production,2)} kg\n"
+                    f"[b]{self.t('profit_output_revenue')}:[/b] ₹{round(revenue,2)}\n"
+                    f"[b]{self.t('profit_output_cost')}:[/b] ₹{round(cost,2)}\n"
+                    f"[b]{self.t('profit_output_profit')}:[/b] ₹{round(profit,2)}\n"
+                    f"[b]{self.t('profit_output_margin')}:[/b] {round(margin,2)}%"
+                )
+            else:
+                result = (
+                    f"[b]{self.t('profit_output_crop')}:[/b] {crop}\n"
+                    f"[b]{self.t('profit_output_prod')}:[/b] {round(production,2)} kg\n"
+                    f"[b]{self.t('profit_output_revenue')}:[/b] ₹{round(revenue,2)}\n"
+                    f"[b]{self.t('profit_output_cost')}:[/b] ₹{round(cost,2)}\n"
+                    f"[b]{self.t('profit_output_profit')}:[/b] ₹{round(profit,2)}\n"
+                    f"[b]{self.t('profit_output_margin')}:[/b] {round(margin,2)}%"
+                )
+            self.root.ids.profit_result.text = result
+        except ValueError:
+            self.root.ids.profit_result.text = self.t("error_valid")
+        except Exception as e:
+            self.root.ids.profit_result.text = f"Error: {str(e)}"
+
+if __name__ == "__main__":
+    AgriApp().run()
+

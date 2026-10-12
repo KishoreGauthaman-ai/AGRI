@@ -1,0 +1,660 @@
+#:import dp kivy.metrics.dp
+#:import FitImage kivymd.uix.fitimage.FitImage
+MDScreen:
+    name: "AGRI"
+    id: farm
+    md_bg_color: app.theme_bg_color
+
+    MDBottomNavigation:
+        id: nav_bar
+        panel_color: app.theme_nav_color
+
+        MDBottomNavigationItem:
+            name: "weather"
+            id: nav_weather
+            text: "AgroSky"
+            icon: "weather-partly-cloudy"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: "20dp"
+                spacing: "20dp"
+                md_bg_color: 0, 0, 0, 0
+                canvas.before:
+                    Color:
+                        rgba: app.theme_bg_color
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [25, 25, 25, 25]
+
+                MDLabel:
+
+                    font_name: "NotoTamil"
+                    id: weather_title
+                    text: "AGROSKY"
+                    halign: "center"
+                    font_style: "H3"
+                    font_size: "48sp"
+                    theme_text_color: "Custom"
+                    text_color: app.theme_title_color
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                MDTextField:
+
+                    font_name: "NotoTamil"
+                    id: city_field
+                    hint_text: "Enter City Name"
+                    mode: "rectangle"
+                    icon_right: "map-search"
+                    line_color_normal: app.theme_line_color
+                    line_color_focus: app.theme_line_color
+                    text_color: app.theme_text_color
+                    hint_text_color: app.theme_hint_color
+                    fill_color_normal: app.theme_field_fill
+                    fill_color_focus: app.theme_field_fill
+
+                MDFillRoundFlatButton:
+                    id: search_btn
+                    style: "filled"
+                    text: "Get Weather"
+                    pos_hint: {"center_x": 0.5}
+                    md_bg_color: app.theme_btn_color
+                    on_release: app.get_weather()
+
+                MDCard:
+                    orientation: "vertical"
+                    padding: "15dp"
+                    size_hint: 0.9, None
+                    height: "250dp"
+                    pos_hint: {"center_x": 0.5}
+                    radius: [25]
+                    elevation: 8
+                    md_bg_color: app.theme_card_color
+                    line_color: app.theme_line_color
+
+                    MDIcon:
+                        icon: app.weather_icon
+                        halign: "center"
+                        theme_text_color: "Custom"
+                        text_color: app.theme_icon_color
+                        font_size: "64sp"
+
+                    MDLabel:
+
+                        font_name: "NotoTamil"
+                        text: app.temperature
+                        halign: "center"
+                        font_style: "H3"
+                        theme_text_color: "Custom"
+                        text_color: app.theme_text_color
+
+                    MDLabel:
+
+                        font_name: "NotoTamil"
+                        text: app.condition
+                        halign: "center"
+                        theme_text_color: "Secondary"
+                        text_color: app.theme_sub_color
+
+                    MDBoxLayout:
+                        orientation: 'horizontal'
+                        spacing: "10dp"
+                        padding: "40dp"
+
+                        MDGridLayout:
+                            cols: 2
+                            spacing: "30dp"
+                            padding: "10dp"
+
+                            MDIcon:
+                                icon: "water-percent"
+                                halign: "right"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_sub_color
+                            MDLabel:
+                                font_name: "NotoTamil"
+                                text: app.humidity
+                                halign: "left"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_text_color
+
+                            MDIcon:
+                                icon: "weather-windy"
+                                halign: "right"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_sub_color
+                            MDLabel:
+                                font_name: "NotoTamil"
+                                text: app.wind
+                                halign: "left"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_text_color
+
+                        Widget:
+                        MDGridLayout:
+                            cols: 2
+                            spacing: "30dp"
+                            padding: "10dp"
+
+                            MDIcon:
+                                icon: "temperature-celsius"
+                                halign: "right"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_sub_color
+                            MDLabel:
+                                font_name: "NotoTamil"
+                                text: app.feels_like
+                                halign: "left"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_text_color
+
+                            MDIcon:
+                                icon: 'waves'
+                                halign: "right"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_sub_color
+                            MDLabel:
+                                font_name: "NotoTamil"
+                                text: app.sea_level
+                                halign: "left"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_text_color
+                    Widget:
+                Widget:
+
+        
+
+        MDBottomNavigationItem:
+            name: "spacing"
+            id: nav_spacing
+            text: "CropSpace"
+            icon: "ruler-square"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                md_bg_color: 0, 0, 0, 0
+                canvas.before:
+                    Color:
+                        rgba: app.theme_bg_color
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [25, 25, 25, 25]
+
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(70)
+                    padding: dp(15)
+
+                    MDLabel:
+
+                        font_name: "NotoTamil"
+                        id: spacing_title
+                        text: "Crop Planning Suite"
+                        halign: "center"
+                        font_style: "H6"
+                        theme_text_color: "Custom"
+                        text_color: app.theme_title_color
+
+                ScrollView:
+                    size_hint: 1, 1
+
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: dp(20)
+                        spacing: dp(20)
+
+                        MDCard:
+                            orientation: "vertical"
+                            padding: dp(20)
+                            spacing: dp(15)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            radius: [25]
+                            elevation: 8
+                            md_bg_color: app.theme_card_color
+                            line_color: app.theme_line_color
+
+                            MDLabel:
+
+                                font_name: "NotoTamil"
+                                id: field_details
+                                text: "Field Details"
+                                font_style: "H6"
+                                halign: "center"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_title_color
+
+                            MDTextField:
+
+                                font_name: "NotoTamil"
+                                id: field_length
+                                hint_text: "Field Length (meters)"
+                                mode: "fill"
+                                size_hint_y: None
+                                height: dp(50)
+                                line_color_normal: app.theme_line_color
+                                line_color_focus: app.theme_line_color
+                                text_color: app.theme_text_color
+                                hint_text_color: app.theme_hint_color
+                                fill_color_normal: app.theme_field_fill
+                                fill_color_focus: app.theme_field_fill
+
+                            MDTextField:
+
+                                font_name: "NotoTamil"
+                                id: field_width
+                                hint_text: "Field Width (meters)"
+                                mode: "fill"
+                                size_hint_y: None
+                                height: dp(50)
+                                line_color_normal: app.theme_line_color
+                                line_color_focus: app.theme_line_color
+                                text_color: app.theme_text_color
+                                hint_text_color: app.theme_hint_color
+                                fill_color_normal: app.theme_field_fill
+                                fill_color_focus: app.theme_field_fill
+
+                            MDDropDownItem:
+                                id: crop_dropdown
+                                text: "Select Crop"
+                                on_release: app.crop_menu.open()
+                                text_color: app.theme_text_color
+
+                        MDCard:
+                            orientation: "vertical"
+                            padding: dp(20)
+                            spacing: dp(15)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            radius: [25]
+                            elevation: 8
+                            md_bg_color: app.theme_card_color
+                            line_color: app.theme_line_color
+
+                            MDLabel:
+
+                                font_name: "NotoTamil"
+                                id: soil_env
+                                text: "Soil & Environment"
+                                font_style: "H6"
+                                halign: "center"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_title_color
+
+                            MDDropDownItem:
+                                id: soil_dropdown
+                                text: "Select Soil Type"
+                                on_release: app.soil_menu.open()
+                                text_color: app.theme_text_color
+
+                            MDDropDownItem:
+                                id: moisture_dropdown
+                                text: "Select Moisture Level"
+                                on_release: app.moisture_menu.open()
+                                text_color: app.theme_text_color
+
+                            MDTextField:
+
+                                font_name: "NotoTamil"
+                                id: ph_input
+                                hint_text: "Soil pH Level"
+                                mode: "fill"
+                                size_hint_y: None
+                                height: dp(50)
+                                line_color_normal: app.theme_line_color
+                                line_color_focus: app.theme_line_color
+                                text_color: app.theme_text_color
+                                hint_text_color: app.theme_hint_color
+                                fill_color_normal: app.theme_field_fill
+                                fill_color_focus: app.theme_field_fill
+
+                        MDCard:
+                            orientation: "vertical"
+                            padding: dp(20)
+                            spacing: dp(15)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            radius: [25]
+                            elevation: 8
+                            md_bg_color: app.theme_card_color
+                            line_color: app.theme_line_color
+
+                            MDLabel:
+
+                                font_name: "NotoTamil"
+                                id: smart_analysis
+                                text: "Smart Farm AI Analysis"
+                                font_style: "H6"
+                                halign: "center"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_title_color
+
+                            MDRaisedButton:
+                                id: run_analysis
+                                text: "Run Smart Farm Analysis"
+                                pos_hint: {"center_x": 0.5}
+                                size_hint_x: 0.7
+                                md_bg_color: app.theme_btn_color
+                                on_release: app.run_bot_processing()
+
+                            MDLabel:
+
+                                font_name: "NotoTamil"
+                                id: bot_output
+                                adaptive_height: True
+                                text_size: self.width, None
+                                markup: True
+                                theme_text_color: "Custom"
+                                text_color: app.theme_text_color
+
+
+        MDBottomNavigationItem:
+            name: "disease"
+            id: nav_disease
+            text: "LeafGuard"
+            icon: "leaf"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: dp(20)
+                spacing: dp(20)
+                md_bg_color: 0, 0, 0, 0
+                canvas.before:
+                    Color:
+                        rgba: app.theme_bg_color
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [25, 25, 25, 25]
+
+                ScrollView:
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: self.minimum_height
+                        spacing: dp(20)
+                        padding: dp(20)
+
+                        MDLabel:
+
+                            font_name: "NotoTamil"
+                            id: disease_title
+                            text: "LeafGuard – AI Disease Detection"
+                            halign: "center"
+                            font_style: "H5"
+                            bold: True
+                            theme_text_color: "Custom"
+                            text_color: app.theme_title_color
+
+                        FitImage:
+                            id: leaf_preview
+                            source: ""
+                            size_hint_y: None
+                            height: dp(250)
+                            radius: [20]
+
+                        MDRaisedButton:
+                            id: upload_leaf
+                            text: "Upload Leaf Image"
+                            pos_hint: {"center_x": 0.5}
+                            size_hint_x: 0.6
+                            md_bg_color: app.theme_btn_color
+                            on_release: app.open_file_chooser()
+
+                        MDRaisedButton:
+                            id: analyze_disease
+                            text: "Analyze Disease"
+                            pos_hint: {"center_x": 0.5}
+                            size_hint_x: 0.6
+                            md_bg_color: app.theme_btn_color
+                            on_release: app.analyze_leaf()
+
+                        MDCard:
+                            padding: dp(20)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            elevation: 8
+                            radius: [25]
+                            md_bg_color: app.theme_card_color
+                            line_color: app.theme_line_color
+
+                            MDLabel:
+
+                                font_name: "NotoTamil"
+                                id: result_label
+                                text: "Prediction result will appear here."
+                                markup: True
+                                adaptive_height: True
+                                theme_text_color: "Custom"
+                                text_color: app.theme_text_color
+
+                        MDCard:
+                            orientation: "vertical"
+                            padding: dp(20)
+                            spacing: dp(15)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            elevation: 8
+                            radius: [25]
+                            md_bg_color: app.theme_card_color
+                            line_color: app.theme_line_color
+
+                            MDLabel:
+
+                                font_name: "NotoTamil"
+                                id: smart_analysis_leaf
+                                text: "Smart Farm AI Analysis"
+                                font_style: "H6"
+                                halign: "center"
+                                theme_text_color: "Custom"
+                                text_color: app.theme_title_color
+
+                            MDRaisedButton:
+                                id: run_analysis_leaf
+                                text: "Run Smart Farm Analysis"
+                                pos_hint: {"center_x": 0.5}
+                                size_hint_x: 0.7
+                                md_bg_color: app.theme_btn_color
+                                on_release: app.run_bot_processing_leaf()
+
+                            MDLabel:
+
+                                font_name: "NotoTamil"
+                                id: bot_output_leaf
+                                adaptive_height: True
+                                text_size: self.width, None
+                                markup: True
+                                theme_text_color: "Custom"
+                                text_color: app.theme_text_color
+
+        MDBottomNavigationItem:
+            name: "chatbot"
+            id: nav_chat
+            text: "AgroBot"
+            icon: "robot"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                md_bg_color: 0, 0, 0, 0
+                canvas.before:
+                    Color:
+                        rgba: app.theme_bg_color
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [25, 25, 25, 25]
+
+                MDTopAppBar:
+                    id: chat_title
+                    title: "AgroBot"
+                    elevation: 8
+                    pos_hint: {"top": 1}
+                    md_bg_color: app.theme_nav_color
+                    specific_text_color: 1, 1, 1, 1
+                    left_action_items: [["cog", lambda x: app.open_settings()]]
+
+                ScrollView:
+                    id: chat_scroll
+
+                    MDBoxLayout:
+                        id: chat_list
+                        orientation: "vertical"
+                        adaptive_height: True
+                        spacing: dp(12)
+                        padding: dp(10), dp(10)
+
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: "60dp"
+                    padding: "5dp"
+                    spacing: "5dp"
+                    md_bg_color: app.theme_nav_color
+                    radius: [20]
+
+                    MDTextField:
+
+                        font_name: "NotoTamil"
+                        id: user_input
+                        hint_text: "Ask AgroBot..."
+                        mode: "fill"
+                        multiline: False
+                        size_hint_x: 0.85
+                        on_text_validate: app.send_message()
+                        line_color_normal: app.theme_line_color
+                        line_color_focus: app.theme_line_color
+                        text_color: app.theme_text_color
+                        hint_text_color: app.theme_hint_color
+                        fill_color_normal: app.theme_field_fill
+                        fill_color_focus: app.theme_field_fill
+
+                    MDIconButton:
+                        icon: "send"
+                        theme_text_color: "Custom"
+                        text_color: app.theme_icon_color
+                        on_release: app.send_message()
+
+        MDBottomNavigationItem:
+            name: "cost"
+            id: nav_cost
+            text: "Cost"
+            icon: "cash"
+
+            ScrollView:
+                MDBoxLayout:
+                    orientation: "vertical"
+                    padding: dp(20)
+                    spacing: dp(12)
+                    md_bg_color: 0, 0, 0, 0
+                    canvas.before:
+                        Color:
+                            rgba: app.theme_bg_color
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [25, 25, 25, 25]
+                    size_hint_y: None
+                    height: self.minimum_height
+
+                    MDLabel:
+
+                        font_name: "NotoTamil"
+                        id: profit_title
+                        text: "Farm Profit Calculator"
+                        halign: "center"
+                        font_style: "H4"
+                        theme_text_color: "Custom"
+                        text_color: app.theme_title_color
+
+                    MDTextField:
+
+                        font_name: "NotoTamil"
+                        id: profit_crop
+                        hint_text: "Crop Name (Example: Tomato)"
+                        icon_left: "sprout"
+                        line_color_normal: app.theme_line_color
+                        line_color_focus: app.theme_line_color
+                        text_color: app.theme_text_color
+                        hint_text_color: app.theme_hint_color
+                        fill_color_normal: app.theme_field_fill
+                        fill_color_focus: app.theme_field_fill
+
+                    MDTextField:
+
+                        font_name: "NotoTamil"
+                        id: profit_area
+                        hint_text: "Area (Acres)"
+                        input_filter: "float"
+                        icon_left: "ruler"
+                        line_color_normal: app.theme_line_color
+                        line_color_focus: app.theme_line_color
+                        text_color: app.theme_text_color
+                        hint_text_color: app.theme_hint_color
+                        fill_color_normal: app.theme_field_fill
+                        fill_color_focus: app.theme_field_fill
+
+                    MDTextField:
+
+                        font_name: "NotoTamil"
+                        id: profit_yield
+                        hint_text: "Yield per Acre (Tons)"
+                        input_filter: "float"
+                        icon_left: "chart-line"
+                        line_color_normal: app.theme_line_color
+                        line_color_focus: app.theme_line_color
+                        text_color: app.theme_text_color
+                        hint_text_color: app.theme_hint_color
+                        fill_color_normal: app.theme_field_fill
+                        fill_color_focus: app.theme_field_fill
+
+                    MDTextField:
+
+                        font_name: "NotoTamil"
+                        id: profit_price
+                        hint_text: "Market Price per Kg (₹)"
+                        input_filter: "float"
+                        icon_left: "currency-inr"
+                        line_color_normal: app.theme_line_color
+                        line_color_focus: app.theme_line_color
+                        text_color: app.theme_text_color
+                        hint_text_color: app.theme_hint_color
+                        fill_color_normal: app.theme_field_fill
+                        fill_color_focus: app.theme_field_fill
+
+                    MDTextField:
+
+                        font_name: "NotoTamil"
+                        id: profit_cost
+                        hint_text: "Total Production Cost (₹)"
+                        input_filter: "float"
+                        icon_left: "cash"
+                        line_color_normal: app.theme_line_color
+                        line_color_focus: app.theme_line_color
+                        text_color: app.theme_text_color
+                        hint_text_color: app.theme_hint_color
+                        fill_color_normal: app.theme_field_fill
+                        fill_color_focus: app.theme_field_fill
+
+                    MDRaisedButton:
+                        id: calc_profit
+                        text: "Calculate Profit"
+                        pos_hint: {"center_x": .5}
+                        size_hint_x: 0.6
+                        md_bg_color: app.theme_btn_color
+                        on_release: app.calculate_profit()
+
+                    MDLabel:
+
+                        font_name: "NotoTamil"
+                        id: profit_result
+                        text: ""
+                        markup: True
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        halign: "center"
+                        theme_text_color: "Custom"
+                        text_color: app.theme_text_color

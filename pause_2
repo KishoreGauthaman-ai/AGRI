@@ -1,0 +1,413 @@
+#:import dp kivy.metrics.dp
+#:import FitImage kivymd.uix.fitimage.FitImage
+
+MDScreen:
+    MDTopAppBar:
+        title: app.t("app_title")
+        right_action_items: [["translate", lambda x: app.toggle_language()]]
+
+    MDBottomNavigation:
+        id: nav_bar
+
+        MDBottomNavigationItem:
+            name: "weather"
+            text: "AgroSky"
+            icon: "weather-partly-cloudy"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: dp(20)
+                spacing: dp(20)
+                
+                MDLabel:
+                    text: app.t("app_title")
+                    halign: "center"
+                    font_style: "H3"
+                    font_size: "48sp"
+                    theme_text_color: "Primary"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+        
+                MDTextField:
+                    id: city_field
+                    hint_text: app.t("enter_city_hint")
+                    mode: "rectangle"
+                    icon_right: "map-search"
+        
+                MDFillRoundFlatButton:
+                    id: search_btn
+                    style: "filled"
+                    text: app.t("get_weather")
+                    pos_hint: {"center_x": 0.5}
+                    on_release: app.get_weather()
+        
+                MDCard:
+                    orientation: "vertical"
+                    padding: dp(15)
+                    size_hint: 0.9, None
+                    height: "250dp"
+                    pos_hint: {"center_x": 0.5}
+                    radius: [20]
+                    elevation: 2
+        
+                    MDIcon:
+                        icon: app.weather_icon
+                        halign: "center"
+                        theme_text_color: "Custom"
+                        text_color: app.theme_cls.primary_color
+                        font_size: "64sp"
+                    
+                    MDLabel:
+                        text: app.temperature
+                        halign: "center"
+                        font_style: "H3"
+                    
+                    MDLabel:
+                        text: app.condition
+                        halign: "center"
+                        theme_text_color: "Secondary"
+                    MDBoxLayout:
+                        orientation: 'horizontal'
+                        spacing: dp(10)
+                        padding: dp(40)
+                        
+                        MDGridLayout:
+                            cols: 2
+                            spacing: dp(30)
+                            padding: dp(10)
+                            
+                            MDIcon:
+                                icon: "water-percent"
+                                halign: "right"
+                            MDLabel:
+                                text: f"{app.t('humidity_label')} {app.humidity}"
+                                halign: "left"
+
+                            MDIcon:
+                                icon: "weather-windy"
+                                halign: "right"
+                            MDLabel:
+                                text: f"{app.t('wind_label')} {app.wind}"
+                                halign: "left"
+
+                        Widget:
+                        MDGridLayout:
+                            cols: 2
+                            spacing: dp(30)
+                            padding: dp(10)
+                            
+                            MDIcon:
+                                icon: "temperature-celsius"
+                                halign: "right"
+                            MDLabel:
+                                text: app.feels_like
+                                halign: "left"
+
+                            MDIcon:
+                                icon: 'waves' 
+                                halign: "right"
+                            MDLabel:
+                                text: app.sea_level
+                                halign: "left"
+                    Widget:
+        #-------------------------------------------------------------------
+        MDBottomNavigationItem:
+            name: "disease"
+            text: "LeafGuard"
+            icon: "leaf"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: dp(20)
+                spacing: dp(20)
+
+                ScrollView:
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: self.minimum_height
+                        spacing: dp(20)
+                        padding: dp(20)
+
+                        MDLabel:
+                            id: leaf_title
+                            text: app.t("leaf_title_text")
+                            halign: "center"
+                            font_style: "H5"
+                            bold: True
+
+                        FitImage:
+                            id: leaf_preview
+                            source: ""
+                            size_hint_y: None
+                            height: dp(250)
+
+                        MDRaisedButton:
+                            id: upload_btn
+                            text: app.t("upload")
+                            pos_hint: {"center_x": 0.5}
+                            size_hint_x: 0.6
+                            on_release: app.open_file_chooser()
+
+                        MDRaisedButton:
+                            id: analyze_btn
+                            text: app.t("analyze")
+                            pos_hint: {"center_x": 0.5}
+                            size_hint_x: 0.6
+                            on_release: app.analyze_leaf()
+
+                        MDCard:
+                            padding: dp(20)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            elevation: 4
+
+                            MDLabel:
+                                id: result_label
+                                text: ""
+                                markup: True
+                                adaptive_height: True
+                                text_color: app.theme_cls.primary_color
+
+                        MDCard:
+                            orientation: "vertical"
+                            padding: dp(20)
+                            spacing: dp(15)
+                            size_hint_y: None
+                            height: self.minimum_height
+
+                            MDLabel:
+                                text: app.t("run_analysis")
+                                font_style: "H6"
+                                halign: "center"
+
+                            MDRaisedButton:
+                                text: app.t("run_analysis")
+                                pos_hint: {"center_x": 0.5}
+                                size_hint_x: 0.7
+                                on_release: app.run_bot_processing_leaf()
+
+                            MDLabel:
+                                id: bot_output_leaf
+                                adaptive_height: True
+                                text_size: self.width, None
+                                markup: True
+
+        #-------------------------------------------------------------------
+        MDBottomNavigationItem:
+            name: "spacing"
+            text: "CropSpace"
+            icon: "ruler-square"
+
+            MDBoxLayout:
+                orientation: "vertical"
+
+                # Title
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(70)
+                    padding: dp(15)
+                    MDLabel:
+                        id: crop_title
+                        text: app.t("crop_title_text")
+                        halign: "center"
+                        font_style: "H6"
+
+                ScrollView:
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: dp(20)
+                        spacing: dp(20)
+
+                        MDCard:
+                            orientation: "vertical"
+                            padding: dp(20)
+                            spacing: dp(15)
+                            size_hint_y: None
+                            height: self.minimum_height
+
+                            MDLabel:
+                                id: field_details
+                                text: app.t("field_details_text")
+                                font_style: "H6"
+                                halign: "center"
+
+                            MDTextField:
+                                id: field_length
+                                hint_text: app.t("field_length_hint")
+                                mode: "fill"
+                                size_hint_y: None
+                                height: dp(50)
+
+                            MDTextField:
+                                id: field_width
+                                hint_text: app.t("field_width_hint")
+                                mode: "fill"
+                                size_hint_y: None
+                                height: dp(50)
+
+                            MDDropDownItem:
+                                id: crop_dropdown
+                                text: app.t("select_crop")
+                                on_release: app.crop_menu.open()
+
+                        MDCard:
+                            orientation: "vertical"
+                            padding: dp(20)
+                            spacing: dp(15)
+                            size_hint_y: None
+                            height: self.minimum_height
+
+                            MDLabel:
+                                text: app.t("soil_env_text")
+                                font_style: "H6"
+                                halign: "center"
+
+                            MDDropDownItem:
+                                id: soil_dropdown
+                                text: app.t("select_soil")
+                                on_release: app.soil_menu.open()
+
+                            MDDropDownItem:
+                                id: moisture_dropdown
+                                text: app.t("select_moisture")
+                                on_release: app.moisture_menu.open()
+
+                            MDTextField:
+                                id: ph_input
+                                hint_text: app.t("ph_hint")
+                                mode: "fill"
+                                size_hint_y: None
+                                height: dp(50)
+
+                        MDCard:
+                            orientation: "vertical"
+                            padding: dp(20)
+                            spacing: dp(15)
+                            size_hint_y: None
+                            height: self.minimum_height
+
+                            MDLabel:
+                                id: crop_analysis_label
+                                text: app.t("run_analysis")
+                                font_style: "H6"
+                                halign: "center"
+
+                            MDRaisedButton:
+                                id: run_analysis_crop
+                                text: app.t("run_analysis")
+                                pos_hint: {"center_x": 0.5}
+                                size_hint_x: 0.7
+                                on_release: app.run_bot_processing()
+
+                            MDLabel:
+                                id: bot_output
+                                adaptive_height: True
+                                text_size: self.width, None
+                                markup: True
+
+        #-------------------------------------------------------------------
+        MDBottomNavigationItem:
+            name: "chatbot"
+            text: "AgroBot"
+            icon: "robot"
+            
+            MDBoxLayout:
+                orientation: "vertical"
+        
+                ScrollView:
+                    id: chat_scroll
+
+                    MDBoxLayout:
+                        id: chat_list
+                        orientation: "vertical"
+                        adaptive_height: True
+                        spacing: dp(12)
+                        padding: dp(10), dp(10)
+
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: "60dp"
+                    padding: dp(5)
+                    spacing: dp(5)
+
+                    MDTextField:
+                        id: user_input
+                        hint_text: app.t("chat_hint")
+                        mode: "fill"
+                        multiline: False
+                        size_hint_x: 0.85
+                        on_text_validate: app.send_message()
+        
+                    MDIconButton:
+                        icon: "send"
+                        theme_text_color: "Custom"
+                        text_color: app.theme_cls.primary_color
+                        on_release: app.send_message()
+
+        #-------------------------------------------------------------------
+        MDBottomNavigationItem:
+            name: "cost"
+            text: "Cost"
+            icon: "cash"
+            
+            ScrollView:
+                MDBoxLayout:
+                    orientation: "vertical"
+                    padding: dp(20)
+                    spacing: dp(12)
+                    size_hint_y: None
+                    height: self.minimum_height
+
+                    MDLabel:
+                        id: profit_title
+                        text: app.t("profit_title_text")
+                        halign: "center"
+                        font_style: "H4"
+
+                    MDTextField:
+                        id: profit_crop
+                        hint_text: app.t("profit_crop_hint")
+                        icon_left: "sprout"
+
+                    MDTextField:
+                        id: profit_area
+                        hint_text: app.t("area_hint")
+                        input_filter: "float"
+                        icon_left: "ruler"
+
+                    MDTextField:
+                        id: profit_yield
+                        hint_text: app.t("yield_hint")
+                        input_filter: "float"
+                        icon_left: "chart-line"
+
+                    MDTextField:
+                        id: profit_price
+                        hint_text: app.t("price_hint")
+                        input_filter: "float"
+                        icon_left: "currency-inr"
+
+                    MDTextField:
+                        id: profit_cost
+                        hint_text: app.t("cost_hint")
+                        input_filter: "float"
+                        icon_left: "cash"
+
+                    MDRaisedButton:
+                        id: calc_profit_btn
+                        text: app.t("calc_profit")
+                        pos_hint: {"center_x": .5}
+                        size_hint_x: 0.6
+                        on_release: app.calculate_profit()
+
+                    MDLabel:
+                        id: profit_result
+                        text: ""
+                        markup: True
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        halign: "center"
+

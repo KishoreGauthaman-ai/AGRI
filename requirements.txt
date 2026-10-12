@@ -1,0 +1,13 @@
+kivy
+kivymd
+pillow
+requests
+grok
+dotenv
+python-dotenv
+opencv-python
+numpy
+pandas
+matplotlib
+seaborn
+
